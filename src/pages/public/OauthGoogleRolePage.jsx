@@ -40,7 +40,7 @@ const OauthGoogleRolePage = () => {
       localStorage.setItem("token", res.data.token);
       setUser(res.data.user);
       const r = res.data.user.role;
-      navigate(r === "admin" ? "/admin" : r === "company" ? "/company" : "/user");
+      navigate(r === "admin" ? "/admin" : r === "employer" ? "/employer" : "/jobseeker");
     } catch (err) {
       const d = err.response?.data;
       setError({ code: d?.code, message: d?.message || "Could not finish sign-up." });

@@ -21,7 +21,7 @@ const OauthSuccessPage = () => {
       .then((res) => {
         setUser(res.data.user);
         const r = res.data.user.role;
-        navigate(r === "admin" ? "/admin" : r === "company" ? "/company" : "/user");
+        navigate(r === "admin" ? "/admin" : r === "employer" ? "/employer" : "/jobseeker");
       })
       .catch(() => navigate("/login"));
   }, [navigate, params, setUser]);

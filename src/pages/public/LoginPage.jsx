@@ -36,7 +36,7 @@ const LoginPage = () => {
     setError(null);
     try {
       const user = await login(form.email, form.password);
-      navigate(user.role === "admin" ? "/admin" : user.role === "company" ? "/company" : "/user");
+      navigate(user.role === "admin" ? "/admin" : user.role === "employer" ? "/employer" : "/jobseeker");
     } catch (err) {
       const d = err.response?.data;
       setError({

@@ -1,24 +1,35 @@
 import { useEffect, useState } from "react";
 import api from "../../api/client";
 
-const CompanyDashboard = () => {
+const EmployerDashboard = () => {
   const [profile, setProfile] = useState({ name: "", companyName: "", description: "", industry: "" });
   const [jobs, setJobs] = useState([]);
   const [bids, setBids] = useState([]);
   const [jobForm, setJobForm] = useState({ description: "", budget: "", duration: "", location: "" });
   const [message, setMessage] = useState("");
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const load = async () => {
     const [profileRes, jobsRes] = await Promise.all([api.get("/company/me"), api.get("/company/jobs")]);
-    if (profileRes.data) setProfile(profileRes.data);
+    if (profileRes.data) {
+      setProfile(profileRes.data);
+      if (!profileRes.data.companyName || !profileRes.data.industry) {
+        setIsEditingProfile(true);
+      }
+    } else {
+      setIsEditingProfile(true);
+    }
     setJobs(jobsRes.data);
+    setIsLoaded(true);
   };
 
   useEffect(() => { load(); }, []);
 
   const saveProfile = async () => {
     await api.put("/company/me", profile);
-    setMessage("Company profile saved");
+    setMessage(isEditingProfile ? "Company profile saved successfully!" : "Company profile updated.");
+    setIsEditingProfile(false);
   };
 
   const createJob = async () => {
@@ -33,21 +44,33 @@ const CompanyDashboard = () => {
     setBids(res.data);
   };
 
+  const isProfileComplete = profile.companyName && profile.industry;
+
+  if (!isLoaded) return <main className="container"><p>Loading dashboard...</p></main>;
+
   return (
     <main className="container">
-      <h2>Company Dashboard</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h2 style={{ margin: 0 }}>Employer Dashboard</h2>
+        {isProfileComplete && !isEditingProfile && (
+          <button onClick={() => setIsEditingProfile(true)}>Edit Profile</button>
+        )}
+      </div>
       {message && <p className="success">{message}</p>}
-      <section className="card form">
-        <h3>Company Profile</h3>
-        <input placeholder="Your name (contact)" value={profile.name || ""} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
-        <input placeholder="Company name" value={profile.companyName || ""} onChange={(e) => setProfile({ ...profile, companyName: e.target.value })} />
-        <input placeholder="Description" value={profile.description || ""} onChange={(e) => setProfile({ ...profile, description: e.target.value })} />
-        <input placeholder="Industry" value={profile.industry || ""} onChange={(e) => setProfile({ ...profile, industry: e.target.value })} />
-        <button onClick={saveProfile}>Save profile</button>
-      </section>
-
-      <section className="card form">
-        <h3>Post Job</h3>
+      
+      {isEditingProfile ? (
+        <form className="card form" onSubmit={(e) => { e.preventDefault(); saveProfile(); }}>
+          <h3>{!isProfileComplete ? "Complete Company Profile" : "Edit Profile"}</h3>
+          <input required placeholder="Your name (contact)" value={profile.name || ""} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
+        <input required placeholder="Company name" value={profile.companyName || ""} onChange={(e) => setProfile({ ...profile, companyName: e.target.value })} />
+        <input required placeholder="Description" value={profile.description || ""} onChange={(e) => setProfile({ ...profile, description: e.target.value })} />
+        <input required placeholder="Industry" value={profile.industry || ""} onChange={(e) => setProfile({ ...profile, industry: e.target.value })} />
+        <button type="submit">{!isProfileComplete ? "Save & Continue" : "Save Profile"}</button>
+      </form>
+      ) : (
+      <>
+        <section className="card form">
+          <h3>Post Job</h3>
         <input placeholder="Description" value={jobForm.description} onChange={(e) => setJobForm({ ...jobForm, description: e.target.value })} />
         <input placeholder="Budget" type="number" value={jobForm.budget} onChange={(e) => setJobForm({ ...jobForm, budget: e.target.value })} />
         <input placeholder="Duration" value={jobForm.duration} onChange={(e) => setJobForm({ ...jobForm, duration: e.target.value })} />
@@ -81,8 +104,10 @@ const CompanyDashboard = () => {
           ))}
         </div>
       </section>
+      </>
+      )}
     </main>
   );
 };
 
-export default CompanyDashboard;
+export default EmployerDashboard;

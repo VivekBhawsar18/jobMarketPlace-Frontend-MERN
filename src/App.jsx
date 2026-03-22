@@ -3,13 +3,13 @@ import { AuthProvider } from "./auth/AuthContext";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import CompanyDashboard from "./pages/company/CompanyDashboard";
+import EmployerDashboard from "./pages/employer/EmployerDashboard";
 import HomePage from "./pages/public/HomePage";
 import LoginPage from "./pages/public/LoginPage";
 import OauthGoogleRolePage from "./pages/public/OauthGoogleRolePage";
 import OauthSuccessPage from "./pages/public/OauthSuccessPage";
 import RegisterPage from "./pages/public/RegisterPage";
-import UserDashboard from "./pages/user/UserDashboard";
+import JobSeekerDashboard from "./pages/jobseeker/JobSeekerDashboard";
 
 function App() {
   return (
@@ -24,18 +24,18 @@ function App() {
           <Route path="/oauth/google-role" element={<OauthGoogleRolePage />} />
 
           <Route
-            path="/user"
+            path="/jobseeker"
             element={
-              <ProtectedRoute roles={["user"]}>
-                <UserDashboard />
+              <ProtectedRoute roles={["jobseeker"]}>
+                <JobSeekerDashboard />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/company"
+            path="/employer"
             element={
-              <ProtectedRoute roles={["company"]}>
-                <CompanyDashboard />
+              <ProtectedRoute roles={["employer"]}>
+                <EmployerDashboard />
               </ProtectedRoute>
             }
           />

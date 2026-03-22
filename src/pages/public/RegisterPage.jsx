@@ -4,7 +4,7 @@ import { useAuth } from "../../auth/AuthContext";
 import AlertBanner from "../../components/AlertBanner";
 import api from "../../api/client";
 
-const initialSeeker = { name: "", email: "", password: "", otp: "" };
+const initialSeeker = { firstName: "", lastName: "", email: "", password: "", otp: "" };
 const initialEmployer = { name: "", email: "", password: "", companyName: "", description: "", industry: "", otp: "" };
 
 const RegisterPage = () => {
@@ -45,9 +45,13 @@ const RegisterPage = () => {
     setError(null);
     setSuccess("");
     try {
-      await registerJobSeeker(seekerForm);
+      const formToSend = {
+        ...seekerForm,
+        name: `${seekerForm.firstName} ${seekerForm.lastName}`.trim()
+      };
+      await registerJobSeeker(formToSend);
       setSuccess("Account created. Redirecting…");
-      navigate("/user");
+      navigate("/jobseeker");
     } catch (err) {
       const d = err.response?.data;
       setError({ code: d?.code, message: d?.message || "Registration failed" });
@@ -61,7 +65,7 @@ const RegisterPage = () => {
     try {
       await registerEmployer(employerForm);
       setSuccess("Account created. Redirecting…");
-      navigate("/company");
+      navigate("/employer");
     } catch (err) {
       const d = err.response?.data;
       setError({ code: d?.code, message: d?.message || "Registration failed" });
@@ -156,9 +160,15 @@ const RegisterPage = () => {
 
         {flow === "jobseeker" && (
           <form onSubmit={handleSeekerSubmit} className="form" style={{ gap: "1.25rem", marginBottom: 0 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-              <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Full Name</label>
-              <input placeholder="Enter your full name" value={seekerForm.name} onChange={(e) => setSeekerForm({ ...seekerForm, name: e.target.value })} required style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+            <div style={{ display: "flex", gap: "1rem" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1 }}>
+                <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>First Name</label>
+                <input placeholder="First name" value={seekerForm.firstName} onChange={(e) => setSeekerForm({ ...seekerForm, firstName: e.target.value })} required style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1 }}>
+                <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Last Name</label>
+                <input placeholder="Last name" value={seekerForm.lastName} onChange={(e) => setSeekerForm({ ...seekerForm, lastName: e.target.value })} required style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+              </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
               <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Email Address</label>
