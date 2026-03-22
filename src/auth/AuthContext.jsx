@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import api from "../api/client";
 
 const AuthContext = createContext(null);
@@ -14,7 +14,8 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    api.get("/auth/me")
+    api
+      .get("/auth/me")
       .then((res) => setUser(res.data.user))
       .catch(() => {
         localStorage.removeItem("token");
@@ -23,23 +24,47 @@ export const AuthProvider = ({ children }) => {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (email, password) => {
-    const res = await api.post("/auth/login", { email, password });
-    localStorage.setItem("token", res.data.token);
-    setUser(res.data.user);
-    return res.data.user;
-  };
+  const applySession = useCallback((token, nextUser) => {
+    localStorage.setItem("token", token);
+    setUser(nextUser);
+  }, []);
 
-  const register = async (payload) => {
-    return api.post("/auth/register", payload);
-  };
+  const login = useCallback(
+    async (email, password) => {
+      const res = await api.post("/auth/login", { email, password });
+      applySession(res.data.token, res.data.user);
+      return res.data.user;
+    },
+    [applySession]
+  );
 
-  const logout = () => {
+  const registerJobSeeker = useCallback(
+    async (payload) => {
+      const res = await api.post("/auth/register/jobseeker", payload);
+      applySession(res.data.token, res.data.user);
+      return res.data.user;
+    },
+    [applySession]
+  );
+
+  const registerEmployer = useCallback(
+    async (payload) => {
+      const res = await api.post("/auth/register/employer", payload);
+      applySession(res.data.token, res.data.user);
+      return res.data.user;
+    },
+    [applySession]
+  );
+
+  const logout = useCallback(() => {
     localStorage.removeItem("token");
     setUser(null);
-  };
+  }, []);
 
-  const value = useMemo(() => ({ user, loading, login, register, logout, setUser }), [user, loading]);
+  const value = useMemo(
+    () => ({ user, loading, login, registerJobSeeker, registerEmployer, logout, setUser }),
+    [user, loading, login, registerJobSeeker, registerEmployer, logout]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

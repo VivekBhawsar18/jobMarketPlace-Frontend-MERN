@@ -3,27 +3,29 @@ import api from "../../api/client";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [companies, setCompanies] = useState([]);
+  const [jobseekers, setJobseekers] = useState([]);
+  const [employers, setEmployers] = useState([]);
   const [jobs, setJobs] = useState([]);
 
   const load = async () => {
-    const [statsRes, usersRes, companiesRes, jobsRes] = await Promise.all([
+    const [statsRes, jsRes, empRes, jobsRes] = await Promise.all([
       api.get("/admin/dashboard/stats"),
-      api.get("/admin/users"),
-      api.get("/admin/companies"),
+      api.get("/admin/jobseekers"),
+      api.get("/admin/employers"),
       api.get("/admin/jobs"),
     ]);
     setStats(statsRes.data);
-    setUsers(usersRes.data);
-    setCompanies(companiesRes.data);
+    setJobseekers(jsRes.data);
+    setEmployers(empRes.data);
     setJobs(jobsRes.data);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
-  const updateStatus = async (path, id, status) => {
-    await api.patch(`/admin/${path}/${id}/status`, { status });
+  const updateJobStatus = async (id, status) => {
+    await api.patch(`/admin/jobs/${id}/status`, { status });
     load();
   };
 
@@ -32,50 +34,52 @@ const AdminDashboard = () => {
       <h2>Admin Dashboard</h2>
       {stats && (
         <section className="grid">
-          <article className="card">Users: {stats.totalUsers}</article>
-          <article className="card">Companies: {stats.totalCompanies}</article>
+          <article className="card">Job seekers: {stats.totalJobSeekers}</article>
+          <article className="card">Employers: {stats.totalEmployers}</article>
+          <article className="card">Admins: {stats.totalAdmins}</article>
           <article className="card">Jobs: {stats.totalJobs}</article>
           <article className="card">Bids: {stats.totalBids}</article>
         </section>
       )}
 
-      <h3>Users</h3>
+      <h3>Job seekers</h3>
       <div className="grid">
-        {users.map((u) => (
+        {jobseekers.map((u) => (
           <article key={u._id} className="card">
-            <p>{u.name} ({u.role}) - {u.status}</p>
-            {u.role !== "admin" && (
-              <div className="row">
-                <button onClick={() => updateStatus("users", u._id, "approved")}>Approve</button>
-                <button onClick={() => updateStatus("users", u._id, "rejected")}>Reject</button>
-              </div>
-            )}
+            <p>
+              {u.name} — {u.email}
+            </p>
           </article>
         ))}
       </div>
 
-      <h3>Companies</h3>
+      <h3>Employers</h3>
       <div className="grid">
-        {companies.map((c) => (
+        {employers.map((c) => (
           <article key={c._id} className="card">
-            <p>{c.name} - {c.status}</p>
-            <div className="row">
-              <button onClick={() => updateStatus("companies", c._id, "approved")}>Approve</button>
-              <button onClick={() => updateStatus("companies", c._id, "rejected")}>Reject</button>
-            </div>
+            <p>
+              <strong>{c.companyName}</strong> — {c.email}
+            </p>
           </article>
         ))}
       </div>
 
-      <h3>Jobs</h3>
+      <h3>Jobs (moderation)</h3>
       <div className="grid">
         {jobs.map((j) => (
           <article key={j._id} className="card">
             <p>{j.description}</p>
             <p>Status: {j.status}</p>
             <div className="row">
-              <button onClick={() => updateStatus("jobs", j._id, "open")}>Approve/Open</button>
-              <button onClick={() => updateStatus("jobs", j._id, "rejected")}>Reject</button>
+              <button type="button" onClick={() => updateJobStatus(j._id, "open")}>
+                Open
+              </button>
+              <button type="button" onClick={() => updateJobStatus(j._id, "closed")}>
+                Close
+              </button>
+              <button type="button" onClick={() => updateJobStatus(j._id, "rejected")}>
+                Reject
+              </button>
             </div>
           </article>
         ))}

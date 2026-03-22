@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../../api/client";
 
 const CompanyDashboard = () => {
-  const [profile, setProfile] = useState({ name: "", description: "", industry: "" });
+  const [profile, setProfile] = useState({ name: "", companyName: "", description: "", industry: "" });
   const [jobs, setJobs] = useState([]);
   const [bids, setBids] = useState([]);
   const [jobForm, setJobForm] = useState({ description: "", budget: "", duration: "", location: "" });
@@ -23,7 +23,7 @@ const CompanyDashboard = () => {
 
   const createJob = async () => {
     await api.post("/company/jobs", { ...jobForm, budget: Number(jobForm.budget) });
-    setMessage("Job created (pending admin approval)");
+    setMessage("Job posted.");
     setJobForm({ description: "", budget: "", duration: "", location: "" });
     load();
   };
@@ -39,7 +39,8 @@ const CompanyDashboard = () => {
       {message && <p className="success">{message}</p>}
       <section className="card form">
         <h3>Company Profile</h3>
-        <input placeholder="Company name" value={profile.name || ""} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
+        <input placeholder="Your name (contact)" value={profile.name || ""} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
+        <input placeholder="Company name" value={profile.companyName || ""} onChange={(e) => setProfile({ ...profile, companyName: e.target.value })} />
         <input placeholder="Description" value={profile.description || ""} onChange={(e) => setProfile({ ...profile, description: e.target.value })} />
         <input placeholder="Industry" value={profile.industry || ""} onChange={(e) => setProfile({ ...profile, industry: e.target.value })} />
         <button onClick={saveProfile}>Save profile</button>

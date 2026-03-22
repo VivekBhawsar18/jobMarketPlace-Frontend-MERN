@@ -16,13 +16,17 @@ const OauthSuccessPage = () => {
     }
 
     localStorage.setItem("token", token);
-    api.get("/auth/me").then((res) => {
-      setUser(res.data.user);
-      navigate("/user");
-    }).catch(() => navigate("/login"));
+    api
+      .get("/auth/me")
+      .then((res) => {
+        setUser(res.data.user);
+        const r = res.data.user.role;
+        navigate(r === "admin" ? "/admin" : r === "company" ? "/company" : "/user");
+      })
+      .catch(() => navigate("/login"));
   }, [navigate, params, setUser]);
 
-  return <main className="container">Signing you in...</main>;
+  return <main className="container">Signing you in…</main>;
 };
 
 export default OauthSuccessPage;
