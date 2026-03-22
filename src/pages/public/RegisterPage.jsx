@@ -17,6 +17,8 @@ const RegisterPage = () => {
   const [success, setSuccess] = useState("");
   const [otpSending, setOtpSending] = useState(false);
   const [otpSentHint, setOtpSentHint] = useState("");
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
 
   const handleSendOtp = async (intent) => {
     const email = intent === "jobseeker" ? seekerForm.email : employerForm.email;
@@ -37,6 +39,25 @@ const RegisterPage = () => {
       setError({ code: d?.code, message: d?.message || "Could not send code." });
     } finally {
       setOtpSending(false);
+    }
+  };
+
+  const handleVerifyOtp = async (intent) => {
+    const email = intent === "jobseeker" ? seekerForm.email : employerForm.email;
+    const otp = intent === "jobseeker" ? seekerForm.otp : employerForm.otp;
+    if (!otp || otp.length !== 6) return;
+    setError(null);
+    setOtpVerifying(true);
+    try {
+      await api.post("/auth/register/otp/verify", { email, intent, otp });
+      setOtpVerified(true);
+      setSuccess("Code verified! You may now complete registration.");
+      setOtpSentHint("");
+    } catch (err) {
+      const d = err.response?.data;
+      setError({ code: d?.code, message: d?.message || "Invalid code." });
+    } finally {
+      setOtpVerifying(false);
     }
   };
 
@@ -116,10 +137,10 @@ const RegisterPage = () => {
               fontSize: "0.95rem"
             }}>
               <svg width="20" height="20" viewBox="0 0 48 48">
-                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
-                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z" />
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
               </svg>
               Sign in with Google
             </Link>
@@ -128,7 +149,7 @@ const RegisterPage = () => {
             </p>
           </section>
         </div>
-        
+
         <p className="muted small" style={{ textAlign: "center", margin: "1.5rem 0" }}>
           Already have an account? <Link to="/login" style={{ color: "#2563eb", fontWeight: 600, textDecoration: "none" }}>Log in here</Link>
         </p>
@@ -139,10 +160,10 @@ const RegisterPage = () => {
   return (
     <main className="container" style={{ maxWidth: "420px", marginTop: "3rem", marginBottom: "3rem" }}>
       <div className="card" style={{ padding: "2rem 1.5rem" }}>
-        <button type="button" className="link-button" onClick={() => { setFlow(null); setError(null); setOtpSentHint(""); }} style={{ marginBottom: "1rem", display: "inline-flex", alignItems: "center", gap: "0.25rem", color: "#64748b", fontWeight: 500, fontSize: "0.9rem", background: "transparent", border: "none", padding: 0 }}>
+        <button type="button" className="link-button" onClick={() => { setFlow(null); setError(null); setOtpSentHint(""); setOtpVerified(false); }} style={{ marginBottom: "1rem", display: "inline-flex", alignItems: "center", gap: "0.25rem", color: "#64748b", fontWeight: 500, fontSize: "0.9rem", background: "transparent", border: "none", padding: 0 }}>
           ← Back
         </button>
-        
+
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
           <h2 style={{ margin: "0 0 0.5rem", color: "#0f172a" }}>{flow === "jobseeker" ? "Job Seeker Signup" : "Employer Signup"}</h2>
           <p className="muted" style={{ margin: 0 }}>Fill in your details to create an account</p>
@@ -176,28 +197,42 @@ const RegisterPage = () => {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
               <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Verification Code</label>
-              <div className="otp-row" style={{ display: "flex", gap: "0.5rem" }}>
+              <div className="otp-row" style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                 <input
                   placeholder="6-digit code"
                   inputMode="numeric"
                   maxLength={6}
                   value={seekerForm.otp}
-                  onChange={(e) => setSeekerForm({ ...seekerForm, otp: e.target.value.replace(/\D/g, "").slice(0, 6) })}
+                  onChange={(e) => { setSeekerForm({ ...seekerForm, otp: e.target.value.replace(/\D/g, "").slice(0, 6) }); setOtpVerified(false); }}
                   required
+                  disabled={otpVerified}
                   style={{ flex: 1, padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }}
                 />
-                <button type="button" className="btn-secondary" disabled={otpSending} onClick={() => handleSendOtp("jobseeker")} style={{ padding: "0.75rem 1rem", borderRadius: "8px", fontWeight: 500 }}>
-                  {otpSending ? "Sending…" : "Send code"}
-                </button>
+                {!otpVerified ? (
+                  <button type="button" className="btn-secondary" disabled={otpSending || otpVerified} onClick={() => handleSendOtp("jobseeker")} style={{ padding: "0.75rem 1rem", borderRadius: "8px", fontWeight: 500 }}>
+                    {otpSending ? "Sending…" : "Send code"}
+                  </button>
+                ) : (
+                  <span style={{ color: "#10b981", fontWeight: 600, padding: "0 0.5rem", whiteSpace: "nowrap" }}>✓ Verified</span>
+                )}
               </div>
+              {!otpVerified && (
+                 <button type="button" onClick={() => handleVerifyOtp("jobseeker")} disabled={otpVerifying || seekerForm.otp.length !== 6} style={{ marginTop: "0.25rem", padding: "0.75rem", backgroundColor: seekerForm.otp.length === 6 ? "#10b981" : "#e2e8f0", color: seekerForm.otp.length === 6 ? "white" : "#94a3b8", borderRadius: "8px", border: "none", fontWeight: 600, cursor: seekerForm.otp.length === 6 ? "pointer" : "not-allowed" }}>
+                    {otpVerifying ? "Verifying..." : "Verify Code"}
+                 </button>
+              )}
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-              <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Password</label>
-              <input placeholder="Minimum 6 characters" type="password" value={seekerForm.password} onChange={(e) => setSeekerForm({ ...seekerForm, password: e.target.value })} required minLength={6} style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
-            </div>
-            <button type="submit" style={{ marginTop: "0.5rem", width: "100%", fontWeight: 600, padding: "0.85rem", fontSize: "1rem", backgroundColor: "#2563eb", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer" }}>
-              Create Account
-            </button>
+            {otpVerified && (
+              <>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Password</label>
+                  <input placeholder="Minimum 6 characters" type="password" value={seekerForm.password} onChange={(e) => setSeekerForm({ ...seekerForm, password: e.target.value })} required minLength={6} style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                </div>
+                <button type="submit" style={{ marginTop: "0.5rem", width: "100%", fontWeight: 600, padding: "0.85rem", fontSize: "1rem", backgroundColor: "#2563eb", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer" }}>
+                  Create Account
+                </button>
+              </>
+            )}
           </form>
         )}
 
@@ -217,36 +252,50 @@ const RegisterPage = () => {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
               <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Verification Code</label>
-              <div className="otp-row" style={{ display: "flex", gap: "0.5rem" }}>
+              <div className="otp-row" style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                 <input
                   placeholder="6-digit code"
                   inputMode="numeric"
                   maxLength={6}
                   value={employerForm.otp}
-                  onChange={(e) => setEmployerForm({ ...employerForm, otp: e.target.value.replace(/\D/g, "").slice(0, 6) })}
+                  onChange={(e) => { setEmployerForm({ ...employerForm, otp: e.target.value.replace(/\D/g, "").slice(0, 6) }); setOtpVerified(false); }}
                   required
+                  disabled={otpVerified}
                   style={{ flex: 1, padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }}
                 />
-                <button type="button" className="btn-secondary" disabled={otpSending} onClick={() => handleSendOtp("employer")} style={{ padding: "0.75rem 1rem", borderRadius: "8px", fontWeight: 500 }}>
-                  {otpSending ? "Sending…" : "Send code"}
-                </button>
+                {!otpVerified ? (
+                  <button type="button" className="btn-secondary" disabled={otpSending || otpVerified} onClick={() => handleSendOtp("employer")} style={{ padding: "0.75rem 1rem", borderRadius: "8px", fontWeight: 500 }}>
+                    {otpSending ? "Sending…" : "Send code"}
+                  </button>
+                ) : (
+                  <span style={{ color: "#10b981", fontWeight: 600, padding: "0 0.5rem", whiteSpace: "nowrap" }}>✓ Verified</span>
+                )}
               </div>
+              {!otpVerified && (
+                 <button type="button" onClick={() => handleVerifyOtp("employer")} disabled={otpVerifying || employerForm.otp.length !== 6} style={{ marginTop: "0.25rem", padding: "0.75rem", backgroundColor: employerForm.otp.length === 6 ? "#10b981" : "#e2e8f0", color: employerForm.otp.length === 6 ? "white" : "#94a3b8", borderRadius: "8px", border: "none", fontWeight: 600, cursor: employerForm.otp.length === 6 ? "pointer" : "not-allowed" }}>
+                    {otpVerifying ? "Verifying..." : "Verify Code"}
+                 </button>
+              )}
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-              <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Password</label>
-              <input placeholder="Minimum 6 characters" type="password" value={employerForm.password} onChange={(e) => setEmployerForm({ ...employerForm, password: e.target.value })} required minLength={6} style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-              <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Industry (Optional)</label>
-              <input placeholder="e.g. Technology, Healthcare" value={employerForm.industry} onChange={(e) => setEmployerForm({ ...employerForm, industry: e.target.value })} style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-              <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Company Description (Optional)</label>
-              <textarea placeholder="Briefly describe your company..." rows={3} value={employerForm.description} onChange={(e) => setEmployerForm({ ...employerForm, description: e.target.value })} style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1", resize: "vertical" }} />
-            </div>
-            <button type="submit" style={{ marginTop: "0.5rem", width: "100%", fontWeight: 600, padding: "0.85rem", fontSize: "1rem", backgroundColor: "#2563eb", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer" }}>
-              Create Account
-            </button>
+            {otpVerified && (
+              <>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Password</label>
+                  <input placeholder="Minimum 6 characters" type="password" value={employerForm.password} onChange={(e) => setEmployerForm({ ...employerForm, password: e.target.value })} required minLength={6} style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Industry (Optional)</label>
+                  <input placeholder="e.g. Technology, Healthcare" value={employerForm.industry} onChange={(e) => setEmployerForm({ ...employerForm, industry: e.target.value })} style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Company Description (Optional)</label>
+                  <textarea placeholder="Briefly describe your company..." rows={3} value={employerForm.description} onChange={(e) => setEmployerForm({ ...employerForm, description: e.target.value })} style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1", resize: "vertical" }} />
+                </div>
+                <button type="submit" style={{ marginTop: "0.5rem", width: "100%", fontWeight: 600, padding: "0.85rem", fontSize: "1rem", backgroundColor: "#2563eb", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer" }}>
+                  Create Account
+                </button>
+              </>
+            )}
           </form>
         )}
       </div>

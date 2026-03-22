@@ -1,4 +1,4 @@
-* { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: border-box; }
 body {
   margin: 0;
   font-family: Inter, system-ui, Arial, sans-serif;
@@ -26,6 +26,7 @@ input, select, button {
   border: 1px solid #cbd5e1;
   font: inherit;
 }
+input, select, textarea { width: 100%; box-sizing: border-box; }
 /* Plain buttons only — .choice-card overrides (fixes white-on-white when .card + button combine) */
 button:not(.choice-card):not(.alert-dismiss) { cursor: pointer; background: #2563eb; color: #fff; border: none; }
 .row { display: flex; gap: 0.5rem; }
