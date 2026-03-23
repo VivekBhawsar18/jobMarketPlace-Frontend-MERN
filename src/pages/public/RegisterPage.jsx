@@ -193,7 +193,15 @@ const RegisterPage = () => {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
               <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Email Address</label>
-              <input placeholder="Enter your email" type="email" value={seekerForm.email} onChange={(e) => setSeekerForm({ ...seekerForm, email: e.target.value })} required style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+              <input 
+                placeholder="Enter your email" 
+                type="email" 
+                value={seekerForm.email} 
+                onChange={(e) => setSeekerForm({ ...seekerForm, email: e.target.value })} 
+                required 
+                disabled={!!otpSentHint}
+                style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1", opacity: otpSentHint ? 0.7 : 1 }} 
+              />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
               <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Verification Code</label>
@@ -248,7 +256,15 @@ const RegisterPage = () => {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
               <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Email Address</label>
-              <input placeholder="Enter work email" type="email" value={employerForm.email} onChange={(e) => setEmployerForm({ ...employerForm, email: e.target.value })} required style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+              <input 
+                placeholder="Enter work email" 
+                type="email" 
+                value={employerForm.email} 
+                onChange={(e) => setEmployerForm({ ...employerForm, email: e.target.value })} 
+                required 
+                disabled={!!otpSentHint}
+                style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1", opacity: otpSentHint ? 0.7 : 1 }} 
+              />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
               <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Verification Code</label>
