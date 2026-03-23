@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import AlertBanner from "../../components/AlertBanner";
 import api from "../../api/client";
 
-const initialSeeker = { firstName: "", lastName: "", email: "", password: "", otp: "" };
-const initialEmployer = { name: "", email: "", password: "", companyName: "", description: "", industry: "", otp: "" };
+const initialSeeker = { firstName: "", lastName: "", email: "", password: "", confirmPassword: "", otp: "" };
+const initialEmployer = { name: "", email: "", password: "", confirmPassword: "", companyName: "", description: "", industry: "", otp: "" };
 
 const RegisterPage = () => {
   const { registerJobSeeker, registerEmployer } = useAuth();
@@ -19,6 +19,22 @@ const RegisterPage = () => {
   const [otpSentHint, setOtpSentHint] = useState("");
   const [otpVerified, setOtpVerified] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldown]);
+
+  const validatePassword = (pass) => {
+    if (pass.length < 8) return "Password must be at least 8 characters long.";
+    if (!/[a-zA-Z]/.test(pass)) return "Password must contain at least one letter.";
+    if (!/\d/.test(pass)) return "Password must contain at least one number.";
+    if (!/[!@#$%^&*(),.?":{}|<>_]/.test(pass)) return "Password must contain at least one special character.";
+    return null;
+  };
 
   const handleSendOtp = async (intent) => {
     const email = intent === "jobseeker" ? seekerForm.email : employerForm.email;
@@ -34,8 +50,14 @@ const RegisterPage = () => {
       let hint = res.data.message || "Check your email for the code.";
       if (res.data.debugCode) hint += ` (Dev code: ${res.data.debugCode})`;
       setOtpSentHint(hint);
+      setCooldown(60);
     } catch (err) {
       const d = err.response?.data;
+      if (d?.code === "OTP_COOLDOWN") {
+        // Extract number from message like "Please wait 53s..."
+        const match = d.message.match(/(\d+)/);
+        if (match) setCooldown(parseInt(match[1]));
+      }
       setError({ code: d?.code, message: d?.message || "Could not send code." });
     } finally {
       setOtpSending(false);
@@ -65,9 +87,21 @@ const RegisterPage = () => {
     e.preventDefault();
     setError(null);
     setSuccess("");
+
+    const passErr = validatePassword(seekerForm.password);
+    if (passErr) {
+      setError({ message: passErr });
+      return;
+    }
+    if (seekerForm.password !== seekerForm.confirmPassword) {
+      setError({ message: "Passwords do not match." });
+      return;
+    }
+
     try {
+      const { confirmPassword, ...dataWithoutConfirm } = seekerForm;
       const formToSend = {
-        ...seekerForm,
+        ...dataWithoutConfirm,
         name: `${seekerForm.firstName} ${seekerForm.lastName}`.trim()
       };
       await registerJobSeeker(formToSend);
@@ -83,8 +117,20 @@ const RegisterPage = () => {
     e.preventDefault();
     setError(null);
     setSuccess("");
+
+    const passErr = validatePassword(employerForm.password);
+    if (passErr) {
+      setError({ message: passErr });
+      return;
+    }
+    if (employerForm.password !== employerForm.confirmPassword) {
+      setError({ message: "Passwords do not match." });
+      return;
+    }
+
     try {
-      await registerEmployer(employerForm);
+      const { confirmPassword, ...dataWithoutConfirm } = employerForm;
+      await registerEmployer(dataWithoutConfirm);
       setSuccess("Account created. Redirecting…");
       navigate("/employer");
     } catch (err) {
@@ -177,6 +223,13 @@ const RegisterPage = () => {
           </div>
         )}
         {success && <div style={{ marginBottom: "1rem" }}><AlertBanner type="success">{success}</AlertBanner></div>}
+        {cooldown > 0 && !otpVerified && (
+          <div style={{ marginBottom: "1rem" }}>
+            <AlertBanner type="error" title="OTP COOLDOWN">
+              Please wait {cooldown}s before requesting another code.
+            </AlertBanner>
+          </div>
+        )}
         {otpSentHint && <div style={{ marginBottom: "1rem" }}><AlertBanner type="info">{otpSentHint}</AlertBanner></div>}
 
         {flow === "jobseeker" && (
@@ -184,11 +237,25 @@ const RegisterPage = () => {
             <div style={{ display: "flex", gap: "1rem" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1 }}>
                 <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>First Name</label>
-                <input placeholder="First name" value={seekerForm.firstName} onChange={(e) => setSeekerForm({ ...seekerForm, firstName: e.target.value })} required style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                <input 
+                  placeholder="First name" 
+                  value={seekerForm.firstName} 
+                  onChange={(e) => setSeekerForm({ ...seekerForm, firstName: e.target.value })} 
+                  required 
+                  disabled={!!otpSentHint || otpVerified}
+                  style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1", opacity: (otpSentHint || otpVerified) ? 0.7 : 1 }} 
+                />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1 }}>
                 <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Last Name</label>
-                <input placeholder="Last name" value={seekerForm.lastName} onChange={(e) => setSeekerForm({ ...seekerForm, lastName: e.target.value })} required style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                <input 
+                  placeholder="Last name" 
+                  value={seekerForm.lastName} 
+                  onChange={(e) => setSeekerForm({ ...seekerForm, lastName: e.target.value })} 
+                  required 
+                  disabled={!!otpSentHint || otpVerified}
+                  style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1", opacity: (otpSentHint || otpVerified) ? 0.7 : 1 }} 
+                />
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
@@ -199,8 +266,8 @@ const RegisterPage = () => {
                 value={seekerForm.email} 
                 onChange={(e) => setSeekerForm({ ...seekerForm, email: e.target.value })} 
                 required 
-                disabled={!!otpSentHint}
-                style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1", opacity: otpSentHint ? 0.7 : 1 }} 
+                disabled={!!otpSentHint || otpVerified}
+                style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1", opacity: (otpSentHint || otpVerified) ? 0.7 : 1 }} 
               />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
@@ -217,8 +284,8 @@ const RegisterPage = () => {
                   style={{ flex: 1, padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }}
                 />
                 {!otpVerified ? (
-                  <button type="button" className="btn-secondary" disabled={otpSending || otpVerified} onClick={() => handleSendOtp("jobseeker")} style={{ padding: "0.75rem 1rem", borderRadius: "8px", fontWeight: 500 }}>
-                    {otpSending ? "Sending…" : "Send code"}
+                  <button type="button" className="btn-secondary" disabled={otpSending || otpVerified || cooldown > 0} onClick={() => handleSendOtp("jobseeker")} style={{ padding: "0.75rem 1rem", borderRadius: "8px", fontWeight: 500 }}>
+                    {otpSending ? "Sending…" : cooldown > 0 ? `Resend in ${cooldown}s` : "Send code"}
                   </button>
                 ) : (
                   <span style={{ color: "#10b981", fontWeight: 600, padding: "0 0.5rem", whiteSpace: "nowrap" }}>✓ Verified</span>
@@ -232,10 +299,17 @@ const RegisterPage = () => {
             </div>
             {otpVerified && (
               <>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                  <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Password</label>
-                  <input placeholder="Minimum 6 characters" type="password" value={seekerForm.password} onChange={(e) => setSeekerForm({ ...seekerForm, password: e.target.value })} required minLength={6} style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                <div style={{ display: "flex", gap: "1rem" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1 }}>
+                    <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Password</label>
+                    <input placeholder="Min 8 characters" type="password" value={seekerForm.password} onChange={(e) => setSeekerForm({ ...seekerForm, password: e.target.value })} required style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1 }}>
+                    <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Confirm Password</label>
+                    <input placeholder="Repeat password" type="password" value={seekerForm.confirmPassword} onChange={(e) => setSeekerForm({ ...seekerForm, confirmPassword: e.target.value })} required style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                  </div>
                 </div>
+                <p style={{ marginTop: "-0.5rem", fontSize: "0.8rem", color: "#64748b" }}>Mix of numbers, alphabets and special characters.</p>
                 <button type="submit" style={{ marginTop: "0.5rem", width: "100%", fontWeight: 600, padding: "0.85rem", fontSize: "1rem", backgroundColor: "#2563eb", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer" }}>
                   Create Account
                 </button>
@@ -248,11 +322,25 @@ const RegisterPage = () => {
           <form onSubmit={handleEmployerSubmit} className="form" style={{ gap: "1.25rem", marginBottom: 0 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
               <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Contact Name</label>
-              <input placeholder="Your full name" value={employerForm.name} onChange={(e) => setEmployerForm({ ...employerForm, name: e.target.value })} required style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+              <input 
+                placeholder="Your full name" 
+                value={employerForm.name} 
+                onChange={(e) => setEmployerForm({ ...employerForm, name: e.target.value })} 
+                required 
+                disabled={!!otpSentHint || otpVerified}
+                style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1", opacity: (otpSentHint || otpVerified) ? 0.7 : 1 }} 
+              />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
               <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Company Name</label>
-              <input placeholder="Enter company name" value={employerForm.companyName} onChange={(e) => setEmployerForm({ ...employerForm, companyName: e.target.value })} required style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+              <input 
+                placeholder="Enter company name" 
+                value={employerForm.companyName} 
+                onChange={(e) => setEmployerForm({ ...employerForm, companyName: e.target.value })} 
+                required 
+                disabled={!!otpSentHint || otpVerified}
+                style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1", opacity: (otpSentHint || otpVerified) ? 0.7 : 1 }} 
+              />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
               <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Email Address</label>
@@ -262,8 +350,8 @@ const RegisterPage = () => {
                 value={employerForm.email} 
                 onChange={(e) => setEmployerForm({ ...employerForm, email: e.target.value })} 
                 required 
-                disabled={!!otpSentHint}
-                style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1", opacity: otpSentHint ? 0.7 : 1 }} 
+                disabled={!!otpSentHint || otpVerified}
+                style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1", opacity: (otpSentHint || otpVerified) ? 0.7 : 1 }} 
               />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
@@ -280,8 +368,8 @@ const RegisterPage = () => {
                   style={{ flex: 1, padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }}
                 />
                 {!otpVerified ? (
-                  <button type="button" className="btn-secondary" disabled={otpSending || otpVerified} onClick={() => handleSendOtp("employer")} style={{ padding: "0.75rem 1rem", borderRadius: "8px", fontWeight: 500 }}>
-                    {otpSending ? "Sending…" : "Send code"}
+                  <button type="button" className="btn-secondary" disabled={otpSending || otpVerified || cooldown > 0} onClick={() => handleSendOtp("employer")} style={{ padding: "0.75rem 1rem", borderRadius: "8px", fontWeight: 500 }}>
+                    {otpSending ? "Sending…" : cooldown > 0 ? `Resend in ${cooldown}s` : "Send code"}
                   </button>
                 ) : (
                   <span style={{ color: "#10b981", fontWeight: 600, padding: "0 0.5rem", whiteSpace: "nowrap" }}>✓ Verified</span>
@@ -295,10 +383,17 @@ const RegisterPage = () => {
             </div>
             {otpVerified && (
               <>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                  <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Password</label>
-                  <input placeholder="Minimum 6 characters" type="password" value={employerForm.password} onChange={(e) => setEmployerForm({ ...employerForm, password: e.target.value })} required minLength={6} style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                <div style={{ display: "flex", gap: "1rem" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1 }}>
+                    <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Password</label>
+                    <input placeholder="Min 8 characters" type="password" value={employerForm.password} onChange={(e) => setEmployerForm({ ...employerForm, password: e.target.value })} required style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1 }}>
+                    <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Confirm Password</label>
+                    <input placeholder="Repeat password" type="password" value={employerForm.confirmPassword} onChange={(e) => setEmployerForm({ ...employerForm, confirmPassword: e.target.value })} required style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                  </div>
                 </div>
+                <p style={{ marginTop: "-0.5rem", fontSize: "0.8rem", color: "#64748b" }}>Mix of numbers, alphabets and special characters.</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                   <label style={{ fontSize: "0.9rem", fontWeight: 500, color: "#475569" }}>Industry (Optional)</label>
                   <input placeholder="e.g. Technology, Healthcare" value={employerForm.industry} onChange={(e) => setEmployerForm({ ...employerForm, industry: e.target.value })} style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
