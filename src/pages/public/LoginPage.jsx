@@ -35,8 +35,9 @@ const LoginPage = () => {
     e.preventDefault();
     setError(null);
     try {
-      await login(form.email, form.password);
-      navigate("/");
+      const userData = await login(form.email, form.password);
+      if (userData.role === 'employer') navigate("/employer");
+      else navigate("/");
     } catch (err) {
       const d = err.response?.data;
       setError({

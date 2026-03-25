@@ -10,7 +10,12 @@ const Navbar = () => {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (path.includes('?')) {
+      return (location.pathname + location.search) === path;
+    }
+    return location.pathname === path && !location.search;
+  };
 
   return (
     <header className="nav">
@@ -28,27 +33,24 @@ const Navbar = () => {
         </button>
 
         <nav className={`nav-links ${isMenuOpen ? "mobile-open" : ""}`}>
-          <Link to="/" className={`nav-link ${isActive("/") ? "active" : ""}`} onClick={closeMenu}>Home</Link>
-          
           {!user && (
             <>
-              <Link to="/login" className="nav-btn nav-btn-outline" onClick={closeMenu}>Login</Link>
-              <Link to="/register" className="nav-btn nav-btn-primary" onClick={closeMenu}>Sign Up</Link>
+              <Link to="/login" className={`nav-btn ${isActive("/login") ? "nav-btn-primary" : "nav-btn-outline"}`} onClick={closeMenu}>Login</Link>
+              <Link to="/register" className={`nav-btn ${isActive("/register") ? "nav-btn-primary" : "nav-btn-outline"}`} onClick={closeMenu}>Sign Up</Link>
             </>
           )}
 
           {user?.role === "jobseeker" && (
             <>
               <Link to="/jobseeker" className={`nav-link ${isActive("/jobseeker") ? "active" : ""}`} onClick={closeMenu}>Dashboard</Link>
-              <Link to="/jobseeker?action=edit-profile" className="nav-link" onClick={closeMenu}>Edit Profile</Link>
+              <Link to="/jobseeker?action=edit-profile" className={`nav-link ${isActive("/jobseeker?action=edit-profile") ? "active" : ""}`} onClick={closeMenu}>Edit Profile</Link>
             </>
           )}
 
           {user?.role === "employer" && (
             <>
               <Link to="/employer" className={`nav-link ${isActive("/employer") ? "active" : ""}`} onClick={closeMenu}>Dashboard</Link>
-              <Link to="/employer?action=post-job" className="nav-link" onClick={closeMenu}>Post Job</Link>
-              <Link to="/employer?action=edit-profile" className="nav-link" onClick={closeMenu}>Edit Profile</Link>
+              <Link to="/employer?action=edit-profile" className={`nav-link ${isActive("/employer?action=edit-profile") ? "active" : ""}`} onClick={closeMenu}>Edit Profile</Link>
             </>
           )}
 

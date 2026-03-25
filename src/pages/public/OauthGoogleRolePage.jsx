@@ -39,7 +39,8 @@ const OauthGoogleRolePage = () => {
       });
       localStorage.setItem("token", res.data.token);
       setUser(res.data.user);
-      navigate("/");
+      if (res.data.user.role === 'employer') navigate("/employer");
+      else navigate("/");
     } catch (err) {
       const d = err.response?.data;
       setError({ code: d?.code, message: d?.message || "Could not finish sign-up." });

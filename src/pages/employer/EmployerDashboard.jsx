@@ -34,7 +34,7 @@ const EmployerDashboard = () => {
     const action = params.get("action");
     if (action === "edit-profile") {
       setIsEditingProfile(true);
-    } else if (action === "post-job") {
+    } else {
       setIsEditingProfile(false);
     }
   }, [params]);
