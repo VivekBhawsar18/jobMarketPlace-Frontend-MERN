@@ -20,7 +20,10 @@ const OauthSuccessPage = () => {
       .get("/auth/me")
       .then((res) => {
         setUser(res.data.user);
-        if (res.data.user.role === 'employer') navigate("/employer");
+        const role = res.data.user.role;
+        if (role === 'admin') navigate("/admin");
+        else if (role === 'employer') navigate("/employer");
+        else if (role === 'jobseeker') navigate("/jobseeker");
         else navigate("/");
       })
       .catch(() => navigate("/login"));

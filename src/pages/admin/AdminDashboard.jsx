@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import api from "../../api/client";
 
 const AdminDashboard = () => {
@@ -8,7 +9,9 @@ const AdminDashboard = () => {
   const [jobs, setJobs] = useState([]);
   
   // Category view states
-  const [viewMode, setViewMode] = useState("summary"); // summary, jobseekers, employers, admins, jobs, bids
+  const [params, setParams] = useSearchParams();
+  const viewMode = params.get("view") || "summary";
+  
   const [catData, setCatData] = useState({ data: [], total: 0, page: 1 });
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -70,6 +73,10 @@ const AdminDashboard = () => {
     else fetchCategory(viewMode, catData.page, search);
   };
 
+  const setView = (v) => {
+    setParams({ view: v });
+  };
+
   const showDetail = (item) => {
     alert(JSON.stringify(item, null, 2));
   };
@@ -80,7 +87,7 @@ const AdminDashboard = () => {
       
       {stats && (
         <section className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
-          <div className="admin-stat-card" style={{ cursor: 'pointer' }} onClick={() => setViewMode("jobseekers")}>
+          <div className="admin-stat-card" style={{ cursor: 'pointer' }} onClick={() => setView("jobseekers")}>
             <div className="admin-stat-info">
               <div className="value">{stats.totalJobSeekers}</div>
               <h4>Job seekers:</h4>
@@ -89,7 +96,7 @@ const AdminDashboard = () => {
               <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             </div>
           </div>
-          <div className="admin-stat-card" style={{ cursor: 'pointer' }} onClick={() => setViewMode("employers")}>
+          <div className="admin-stat-card" style={{ cursor: 'pointer' }} onClick={() => setView("employers")}>
             <div className="admin-stat-info">
               <div className="value">{stats.totalEmployers}</div>
               <h4>Employers:</h4>
@@ -98,7 +105,7 @@ const AdminDashboard = () => {
               <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="2"></line><line x1="15" y1="22" x2="15" y2="2"></line><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="10" x2="20" y2="10"></line><line x1="4" y1="14" x2="20" y2="14"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
             </div>
           </div>
-          <div className="admin-stat-card" style={{ cursor: 'pointer' }} onClick={() => setViewMode("admins")}>
+          <div className="admin-stat-card" style={{ cursor: 'pointer' }} onClick={() => setView("admins")}>
             <div className="admin-stat-info">
               <div className="value">{stats.totalAdmins}</div>
               <h4>Admins:</h4>
@@ -107,7 +114,7 @@ const AdminDashboard = () => {
               <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3L15.5 7.5z"></path></svg>
             </div>
           </div>
-          <div className="admin-stat-card" style={{ cursor: 'pointer' }} onClick={() => setViewMode("jobs")}>
+          <div className="admin-stat-card" style={{ cursor: 'pointer' }} onClick={() => setView("jobs")}>
             <div className="admin-stat-info">
               <div className="value">{stats.totalJobs}</div>
               <h4>Jobs:</h4>
@@ -116,7 +123,7 @@ const AdminDashboard = () => {
               <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5h2M11 9h2M11 13h2M11 17h2M7 5H5v14h2M19 5h-2v14h2"></path></svg>
             </div>
           </div>
-          <div className="admin-stat-card" style={{ cursor: 'pointer' }} onClick={() => setViewMode("bids")}>
+          <div className="admin-stat-card" style={{ cursor: 'pointer' }} onClick={() => setView("bids")}>
             <div className="admin-stat-info">
               <div className="value">{stats.totalBids}</div>
               <h4>Bids:</h4>
@@ -133,7 +140,7 @@ const AdminDashboard = () => {
           <section style={{ marginTop: '3rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <h3 style={{ margin: 0 }}>Job seekers</h3>
-              <button className="admin-btn-outline" onClick={() => setViewMode("jobseekers")}>View All</button>
+              <button className="admin-btn-outline" onClick={() => setView("jobseekers")}>View All</button>
             </div>
             <div className="table-container">
               <table>
@@ -175,7 +182,7 @@ const AdminDashboard = () => {
           <section style={{ marginTop: '3rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <h3 style={{ margin: 0 }}>Employers</h3>
-              <button className="admin-btn-outline" onClick={() => setViewMode("employers")}>View All</button>
+              <button className="admin-btn-outline" onClick={() => setView("employers")}>View All</button>
             </div>
             <div className="table-container">
               <table>
@@ -224,7 +231,7 @@ const AdminDashboard = () => {
           <section style={{ marginTop: '3rem', marginBottom: '4rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <h3 style={{ margin: 0 }}>Jobs (moderation)</h3>
-              <button className="admin-btn-outline" onClick={() => setViewMode("jobs")}>View All</button>
+              <button className="admin-btn-outline" onClick={() => setView("jobs")}>View All</button>
             </div>
             <div className="table-container">
               <table>
@@ -270,7 +277,7 @@ const AdminDashboard = () => {
       ) : (
         <section style={{ marginTop: '2rem', marginBottom: '4rem' }}>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '2rem' }}>
-            <button className="admin-btn-outline" onClick={() => setViewMode("summary")}>← Back</button>
+            <button className="admin-btn-outline" onClick={() => setView("summary")}>← Back</button>
             <h3 style={{ margin: 0, textTransform: 'capitalize' }}>Manage {viewMode}</h3>
           </div>
 

@@ -55,7 +55,13 @@ const Navbar = () => {
           )}
 
           {user?.role === "admin" && (
-            <Link to="/admin" className={`nav-link ${isActive("/admin") ? "active" : ""}`} onClick={closeMenu}>Admin Panel</Link>
+            <>
+              <Link to="/admin" className={`nav-link ${isActive("/") || isActive("/admin") ? "active" : ""}`} onClick={closeMenu}>Dashboard</Link>
+              <Link to="/admin?view=jobseekers" className={`nav-link ${isActive("/admin?view=jobseekers") ? "active" : ""}`} onClick={closeMenu}>Job Seekers</Link>
+              <Link to="/admin?view=employers" className={`nav-link ${isActive("/admin?view=employers") ? "active" : ""}`} onClick={closeMenu}>Employers</Link>
+              <Link to="/admin?view=admins" className={`nav-link ${isActive("/admin?view=admins") ? "active" : ""}`} onClick={closeMenu}>Admins</Link>
+              <Link to="/admin?view=jobs" className={`nav-link ${isActive("/admin?view=jobs") ? "active" : ""}`} onClick={closeMenu}>Jobs</Link>
+            </>
           )}
 
           {user && (

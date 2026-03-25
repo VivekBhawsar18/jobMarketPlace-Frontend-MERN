@@ -1,8 +1,18 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 
 const HomePage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'admin') navigate("/admin");
+      else if (user.role === 'employer') navigate("/employer");
+      else if (user.role === 'jobseeker') navigate("/jobseeker");
+    }
+  }, [user, navigate]);
 
   return (
     <main className="container">
