@@ -106,7 +106,7 @@ const RegisterPage = () => {
       };
       await registerJobSeeker(formToSend);
       setSuccess("Account created. Redirecting…");
-      navigate("/jobseeker");
+      navigate("/");
     } catch (err) {
       const d = err.response?.data;
       setError({ code: d?.code, message: d?.message || "Registration failed" });
@@ -132,7 +132,7 @@ const RegisterPage = () => {
       const { confirmPassword, ...dataWithoutConfirm } = employerForm;
       await registerEmployer(dataWithoutConfirm);
       setSuccess("Account created. Redirecting…");
-      navigate("/employer");
+      navigate("/");
     } catch (err) {
       const d = err.response?.data;
       setError({ code: d?.code, message: d?.message || "Registration failed" });

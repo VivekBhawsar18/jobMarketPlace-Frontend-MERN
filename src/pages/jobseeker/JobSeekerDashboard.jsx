@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import api from "../../api/client";
 
 const indiaStatesAndCities = {
@@ -21,6 +22,7 @@ const indiaStatesAndCities = {
 };
 
 const JobSeekerDashboard = () => {
+  const [params] = useSearchParams();
   const [profile, setProfile] = useState({ firstName: "", lastName: "", skills: [], state: "", city: "", location: "", availability: "" });
   const [jobs, setJobs] = useState([]);
   const [message, setMessage] = useState("");
@@ -60,7 +62,16 @@ const JobSeekerDashboard = () => {
     setIsLoaded(true);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
+
+  useEffect(() => {
+    const action = params.get("action");
+    if (action === "edit-profile") {
+      setIsEditingProfile(true);
+    }
+  }, [params]);
 
   const saveProfile = async () => {
     const locationString = profile.state && profile.city 
